@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Empleados</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Lista de Personal Registrado</h1>
+    <table border="1" width="100%" style="margin-top: 20px;">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>DNI</th>
+          <th>Teléfono</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaEmpleados"></tbody>
+    </table>
+    <div class="botones" style="margin-top: 20px;">
+      <a href="crear_personal.html"><button>Agregar nuevo</button></a>
+      <button onclick="logout()">Cerrar sesión</button>
+      <a href="tabla.html"><button>Ver Reporte de Salarios</button></a>
+    </div>    
+  </div>
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      alert("Acceso denegado. Por favor inicia sesión.");
+      window.location.href = 'login.html';
+    }
+
+    const empleados = JSON.parse(localStorage.getItem('empleados')) || [];
+
+    function renderTable() {
+      const tabla = document.getElementById('tablaEmpleados');
+      tabla.innerHTML = '';
+      empleados.forEach((emp, index) => {
+        tabla.innerHTML += `
+          <tr>
+            <td>${emp.nombre}</td>
+            <td>${emp.dni}</td>
+            <td>${emp.telefono}</td>
+            <td>
+              <button onclick="editar(${index})">Editar</button>
+              <button onclick="eliminar(${index})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function editar(index) {
+      localStorage.setItem('editIndex', index);
+      window.location.href = 'crear_personal.html';
+    }
+
+    function eliminar(index) {
+      if (confirm("¿Eliminar este empleado?")) {
+        empleados.splice(index, 1);
+        localStorage.setItem('empleados', JSON.stringify(empleados));
+        renderTable();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      window.location.href = 'login.html';
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>

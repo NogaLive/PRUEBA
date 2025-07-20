@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Usuario</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Registro de Usuario</h1>
+    <form id="registerForm">
+      <div class="form-group">
+        <label>Nombre:</label>
+        <input type="text" name="nombre" required />
+      </div>
+      <div class="form-group">
+        <label>Apellido:</label>
+        <input type="text" name="apellido" required />
+      </div>
+      <div class="form-group">
+        <label>DNI:</label>
+        <input type="number" name="dni" maxlength="8" required />
+      </div>
+      <div class="form-group">
+        <label>Edad:</label>
+        <input type="number" name="edad" min="0" required />
+      </div>
+      <div class="form-group">
+        <label>Usuario:</label>
+        <input type="text" name="username" required />
+      </div>
+      <div class="form-group">
+        <label>Contraseña:</label>
+        <input type="password" name="password" required />
+      </div>
+      <div class="botones">
+        <button type="submit">Registrar</button>
+      </div>
+    </form>
+    <p style="text-align:center;">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const nombre = form.nombre.value.trim();
+      const apellido = form.apellido.value.trim();
+      const dni = form.dni.value.trim();
+      const edad = parseInt(form.edad.value.trim());
+      const username = form.username.value.trim();
+      const password = form.password.value.trim();
+
+      // Validaciones
+      if (!/^\d{8}$/.test(dni)) {
+        alert("El DNI debe tener exactamente 8 dígitos.");
+        return;
+      }
+
+      if (edad < 18) {
+        alert("La edad mínima es 18 años.");
+        return;
+      }
+
+      if (!nombre || !apellido || !username || !password) {
+        alert("Por favor, complete todos los campos.");
+        return;
+      }
+
+      const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+
+      // Evitar duplicados
+      const existe = usuarios.some(u => u.username === username || u.dni === dni);
+      if (existe) {
+        alert("Este usuario o DNI ya está registrado.");
+        return;
+      }
+
+      usuarios.push({ nombre, apellido, dni, edad, username, password });
+      localStorage.setItem('usuarios', JSON.stringify(usuarios));
+
+      alert("Usuario registrado correctamente");
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>

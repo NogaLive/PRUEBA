@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte Detallado de Salarios con Rol</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      font-family: Arial, sans-serif;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #1976d2;
+      color: white;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f0f0f0;
+    }
+    .buttons {
+      text-align: center;
+      margin: 15px 0;
+    }
+    button {
+      margin: 0 10px;
+      padding: 8px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 3px;
+    }
+    button:hover {
+      background-color: #155a9c;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">Reporte Detallado de Salarios</h2>
+
+  <div class="buttons">
+    <button id="exportExcel">Exportar a Excel</button>
+    <button id="exportPDF">Exportar a PDF</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>DNI</th>
+        <th>puesto</th>
+        <th>Fecha Cálculo</th>
+        <th>Sueldo Base</th>
+        <th>Horas Extras</th>
+        <th>Bonos</th>
+        <th>Deducciones</th>
+        <th>Salario Neto</th>
+      </tr>
+    </thead>
+    <tbody id="reporteBody">
+      <!-- Filas generadas dinámicamente aquí -->
+    </tbody>
+  </table>
+
+  <!-- Librerías necesarias -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    function cargarReporte() {
+      const empleados = JSON.parse(localStorage.getItem('empleados')) || [];
+      const tbody = document.getElementById('reporteBody');
+      tbody.innerHTML = '';
+
+      if (empleados.length === 0) {
+        const filaVacia = document.createElement('tr');
+        filaVacia.innerHTML = `<td colspan="9">No hay empleados registrados</td>`;
+        tbody.appendChild(filaVacia);
+        return;
+      }
+
+      empleados.forEach(emp => {
+        const nombre = emp.nombre || '';
+        const dni = emp.dni || '';
+        const puesto = emp.puesto || '';
+        const fechaCalculo = emp.fechaCalculo || new Date().toISOString().split('T')[0];
+        const sueldo_base   = parseFloat(emp.sueldo_base)   || 0;
+        const horas_extras  = parseFloat(emp.horas_extras)  || 0;
+        const bonos         = parseFloat(emp.bonos)         || 0;
+        const deducciones   = parseFloat(emp.deducciones)   || 0;
+        const salario_neto  = parseFloat(emp.salario_neto)  || 0;
+
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${nombre}</td>
+          <td>${dni}</td>
+          <td>${puesto}</td>
+          <td>${fechaCalculo}</td>
+          <td>S/ ${sueldo_base.toFixed(2)}</td>
+          <td>S/ ${horas_extras.toFixed(2)}</td>
+          <td>S/ ${bonos.toFixed(2)}</td>
+          <td>S/ ${deducciones.toFixed(2)}</td>
+          <td><strong>S/ ${salario_neto.toFixed(2)}</strong></td>
+        `;
+        tbody.appendChild(fila);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', cargarReporte);
+
+    document.getElementById('exportExcel').addEventListener('click', () => {
+      const table = document.querySelector('table');
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Reporte" });
+      XLSX.writeFile(wb, 'reporte_salarios.xlsx');
+    });
+
+    document.getElementById('exportPDF').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.text("Reporte Detallado de Salarios", 14, 20);
+
+      const columns = [
+        { header: 'Nombre',        dataKey: 'nombre' },
+        { header: 'DNI',           dataKey: 'dni' },
+        { header: 'puesto',        dataKey: 'puesto' },
+        { header: 'Fecha Cálculo', dataKey: 'fechaCalculo' },
+        { header: 'Sueldo Base',   dataKey: 'sueldo_base' },
+        { header: 'Horas Extras',  dataKey: 'horas_extras' },
+        { header: 'Bonos',         dataKey: 'bonos' },
+        { header: 'Deducciones',   dataKey: 'deducciones' },
+        { header: 'Salario Neto',  dataKey: 'salario_neto' }
+      ];
+
+      const empleados = JSON.parse(localStorage.getItem('empleados')) || [];
+
+      const rows = empleados.map(emp => ({
+        nombre:        emp.nombre || '',
+        dni:           emp.dni || '',
+        puesto:        emp.puesto || '',
+        fechaCalculo:  emp.fechaCalculo || '',
+        sueldo_base:   `S/ ${parseFloat(emp.sueldo_base   || 0).toFixed(2)}`,
+        horas_extras:  `S/ ${parseFloat(emp.horas_extras  || 0).toFixed(2)}`,
+        bonos:         `S/ ${parseFloat(emp.bonos         || 0).toFixed(2)}`,
+        deducciones:   `S/ ${parseFloat(emp.deducciones   || 0).toFixed(2)}`,
+        salario_neto:  `S/ ${parseFloat(emp.salario_neto  || 0).toFixed(2)}`
+      }));
+
+      doc.autoTable({
+        head: [columns.map(c => c.header)],
+        body: rows.map(r => columns.map(c => r[c.dataKey])),
+        startY: 30,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [25, 118, 210] }
+      });
+
+      doc.save('reporte_salarios.pdf');
+    });
+  </script>
+</body>
+</html>
